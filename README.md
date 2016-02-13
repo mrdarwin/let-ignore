@@ -1,0 +1,2 @@
+# let-ignore
+A chrome extension to let LET users block annoying users.
