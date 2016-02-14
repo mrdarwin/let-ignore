@@ -1,13 +1,13 @@
 {
   "manifest_version": 2,
   "name": "LET-Ignore",
-  "description": "This extension allows you to ignore annoying let users",
-  "version": "0.1",
+  "description": "This extension allows you to ignore annoying let users and block images.",
+  "version": "0.2",
   "background": {
     "scripts": [
       "background.js"
     ],
-    "persistent": false
+    "persistent": true
   },
   "page_action": {
     "default_icon": "icon38.png"
@@ -24,10 +24,13 @@
     }
   ],
   "permissions": [
-    "https://www.lowendtalk.com/",
+    "<all_urls>",
     "declarativeContent",
     "contextMenus",
-    "storage"
+    "storage",
+    "webRequest",
+    "webRequestBlocking",
+    "tabs"
   ],
   "icons":{
     "38":"icon38.png",

@@ -47,6 +47,24 @@ chrome.runtime.onInstalled.addListener(function () {
 
     });
 
+    chrome.contextMenus.create({
+
+        title: "Block images",
+        contexts:["all"],
+        id:"blockImgId",
+        documentUrlPatterns:["*://*.lowendtalk.com/*"],
+
+    });
+
+    chrome.contextMenus.create({
+
+        title: "Unblock images",
+        contexts:["all"],
+        id:"unblockImgId",
+        documentUrlPatterns:["*://*.lowendtalk.com/*"],
+
+    });
+
     chrome.contextMenus.onClicked.addListener(function(info, tab) {
         if (info.menuItemId === "blockId") {
             blockUser(info.selectionText);
@@ -54,8 +72,13 @@ chrome.runtime.onInstalled.addListener(function () {
             unblockUser(info.selectionText);
         } else if (info.menuItemId === "clearId") {
             clearBlockList();
+        } else if (info.menuItemId === "blockImgId") {
+            blockImgs();
+        } else if (info.menuItemId === "unblockImgId") {
+            unblockImgs();
         }
     });
+    blockingImgs = false;
 });
 
 function blockUser(user) {
@@ -109,3 +132,78 @@ function clearBlockList() {
     });
 }
 
+
+
+
+/*
+Keep block/unblock images
+ */
+var blockingImgs = false;
+
+chrome.storage.sync.get({'blocking_imgs': true}, function(obj) {
+    if (obj.blocking_imgs == null || obj.blocking_imgs.length <=0) {
+        unblockImgs();
+    }  else {
+        blockingImgs = true;
+    }
+});
+
+function blockImgs() {
+    blockingImgs = true;
+    chrome.storage.sync.set({'blocking_imgs': true}, function() {
+        console.log('Blocking imgs');
+    });
+}
+
+function unblockImgs() {
+    blockingImgs = false;
+    chrome.storage.sync.set({'blocking_imgs': false}, function() {
+        console.log('Not blocking imgs');
+    });
+}
+
+
+chrome.webRequest.onBeforeRequest.addListener(
+    function (details) {
+        if (details.tabId == -1) {
+            return {cancel:false};
+        }
+        var tab = tabs[details.tabId];
+        console.info(tab.url);
+        if (tab.url.indexOf("lowendtalk.com") == -1) {
+            console.info("Not let :" + tab.url);
+            return {cancel: false};
+        }
+
+        return {cancel: blockingImgs && details.url.indexOf("https://www.lowendtalk.com/") == -1 && details.url.indexOf("https://secure.gravatar.com/") == -1 && details.url.indexOf("http://cdn.vanillaforums.com/")==-1 };
+
+    },
+    {urls: ["<all_urls>"], types: ["image"]},
+    ["blocking"]
+);
+
+/*
+ * --------------------------------------------------
+ * Keep list of tabs outside of request callback
+ * --------------------------------------------------
+ */
+var tabs = {};
+
+// Get all existing tabs
+chrome.tabs.query({}, function(results) {
+    results.forEach(function(tab) {
+        tabs[tab.id] = tab;
+    });
+});
+
+// Create tab event listeners
+function onUpdatedListener(tabId, changeInfo, tab) {
+    tabs[tab.id] = tab;
+}
+function onRemovedListener(tabId) {
+    delete tabs[tabId];
+}
+
+// Subscribe to tab events
+chrome.tabs.onUpdated.addListener(onUpdatedListener);
+chrome.tabs.onRemoved.addListener(onRemovedListener);

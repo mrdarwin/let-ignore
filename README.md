@@ -1,2 +1,2 @@
 # let-ignore
-A chrome extension to let LET users block annoying users.
+A chrome extension to let LET users block images and annoying users.
